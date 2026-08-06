@@ -1,0 +1,24 @@
+┌────────────────────────────────────────┐
+│  📱 SMARTPHONE VIEW - PAINEL ADMIN     │
+├────────────────────────────────────────┤
+│ 🛡️ CEEAC CONTROL                  [🚪] │
+│ Painel Administrativo                  │
+├────────────────────────────────────────┤
+│                                        │
+│  👥 CADASTROS PENDENTES                │
+│  ┌──────────────────────────────────┐  │
+│  │ Solicitante: Carlos Souza        │  │
+│  │ E-mail: carlos@secel.online       │  │
+│  │                                  │  │
+│  │ [Aprovar Vigia]  [Aprovar Admin] │  │ <-- Botões de moderação móvel
+│  │          [Recusar Cadastro]      │  │
+│  └──────────────────────────────────┘  │
+│                                        │
+│  ➕ EMITIR NOVO CARTÃO                 │
+│  ┌──────────────────────────────────┐  │
+│  │ Nome do Proprietário             │  │
+│  │ Placa 01 | Placa 02              │  │
+│  │ Secretaria | Validade            │  │
+│  │       [ SALVAR & ATIVAR ]        │  │
+│  └──────────────────────────────────┘  │
+└────────────────────────────────────────┘

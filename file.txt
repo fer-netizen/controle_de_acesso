@@ -1,0 +1,15 @@
+ Google Apps Script - Editor de Código
+┌────────────────────────────────────────────────────────┐
+│ 📁 Arquivos                                         💾 │
+├────────────────────────────────────────────────────────┤
+│ 📄 appsscript.json  <-- (Configurações de manifesto)   │
+│ 📄 Code.gs          <-- (Roteador central do sistema)  │
+│ 📄 Services.gs      <-- (Banco de dados e segurança)   │
+│ 📄 Styles.html      <-- (Estilos CSS e ícones)         │
+│ 📄 LoginUI.html     <-- (Tela de Login mobile)         │
+│ 📄 PortariaUI.html  <-- (Terminal de Portaria mobile)  │
+│ 📄 AdminUI.html     <-- (Painel do Admin mobile)       │
+│ 📄 CartaoUI.html    <-- (Portal de cartões de acesso)  │
+│ 📄 Index.html       <-- (Interface do scanner de placa)│
+│ 📄 SidebarUI.html   <-- (Menu de atalhos da planilha)  │
+└────────────────────────────────────────────────────────┘
