@@ -66,7 +66,41 @@ As senhas armazenadas na aba `Usuarios` com o método SHA-256 + salt estático d
 
 ---
 
-## 5. Credenciais Comprometidas
+## 5. Deploy Automático via GitHub Actions (clasp)
+
+O repositório inclui um workflow em `.github/workflows/deploy.yml` que faz `clasp push` automaticamente a cada push na branch `main`.
+
+### Configuração necessária
+
+#### 1. Obter as credenciais do clasp
+
+Na máquina local com acesso à conta Google do projeto:
+
+```bash
+npm install -g @google/clasp
+clasp login
+cat ~/.clasprc.json
+```
+
+Copie o conteúdo completo do arquivo `~/.clasprc.json`.
+
+#### 2. Adicionar o secret no GitHub
+
+1. Acesse o repositório no GitHub → **Settings** → **Secrets and variables** → **Actions**.
+2. Clique em **New repository secret**.
+3. Nome: `CLASP_CREDENTIALS`
+4. Valor: cole o conteúdo do `~/.clasprc.json`.
+
+#### 3. Configurar o Script ID
+
+Edite o arquivo `.clasp.json` na raiz do repositório e substitua `SEU_SCRIPT_ID_AQUI` pelo ID do seu projeto Apps Script.
+
+Para encontrar o Script ID:
+- No editor do Apps Script → **Configurações do projeto** (⚙️) → **ID do script**.
+
+---
+
+## 6. Credenciais Comprometidas
 
 Se qualquer credencial (salt, ID de planilha, OAuth client ID) foi exposta em código-fonte público ou em qualquer repositório:
 
