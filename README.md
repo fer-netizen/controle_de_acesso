@@ -6,8 +6,9 @@ Aplicação containerizável derivada do projeto original em Google Apps Script 
 
 ```bash
 export BOOTSTRAP_ADMIN_EMAIL='admin@secel.online'
-export PASSWORD_PEPPER='gere-uma-vez-e-guarde-em-seguro'
-export SESSION_SECRET='gere-uma-vez-e-guarde-em-seguro'
+export BOOTSTRAP_ADMIN_PASSWORD='defina-uma-senha-inicial-segura'
+export PASSWORD_PEPPER='gere-um-pepper-persistente'
+export SESSION_SECRET='gere-um-segredo-de-sessao-persistente'
 npm install
 npm start
 ```
@@ -18,7 +19,7 @@ Use valores distintos e persistentes para `PASSWORD_PEPPER` e `SESSION_SECRET`; 
 ## Fluxo inicial
 
 1. Acesse `/?page=login`.
-2. Faça o primeiro login com `admin@secel.online` e a senha desejada para bootstrap do administrador.
+2. Faça o primeiro login com o e-mail definido em `BOOTSTRAP_ADMIN_EMAIL` e a senha definida em `BOOTSTRAP_ADMIN_PASSWORD` para bootstrap do administrador.
 3. Faça login novamente com as mesmas credenciais.
 4. Aprove usuários pendentes e emita cartões pelo painel admin.
 
@@ -28,8 +29,9 @@ Use valores distintos e persistentes para `PASSWORD_PEPPER` e `SESSION_SECRET`; 
 docker build -t fernandohonoratoo/gate_control:latest .
 cat <<'EOF' > .env
 BOOTSTRAP_ADMIN_EMAIL=admin@secel.online
-PASSWORD_PEPPER=gere-uma-vez-e-guarde-em-seguro
-SESSION_SECRET=gere-uma-vez-e-guarde-em-seguro
+BOOTSTRAP_ADMIN_PASSWORD=defina-uma-senha-inicial-segura
+PASSWORD_PEPPER=gere-um-pepper-persistente
+SESSION_SECRET=gere-um-segredo-de-sessao-persistente
 EOF
 
 docker run --rm -p 3000:3000 --env-file .env \

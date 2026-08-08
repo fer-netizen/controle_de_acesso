@@ -8,6 +8,7 @@ const PORT = Number(process.env.PORT || 3000);
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'ceeac-db.json');
 const BOOTSTRAP_ADMIN_EMAIL = normalizeEmail(getRequiredEnv('BOOTSTRAP_ADMIN_EMAIL'));
+const BOOTSTRAP_ADMIN_PASSWORD = getRequiredEnv('BOOTSTRAP_ADMIN_PASSWORD');
 const PASSWORD_PEPPER = getRequiredEnv('PASSWORD_PEPPER');
 const SESSION_SECRET = getRequiredEnv('SESSION_SECRET');
 const SESSION_TTL_MS = 1000 * 60 * 60 * 12;
@@ -56,6 +57,9 @@ app.post('/api/auth/login', (req, res) => {
   const db = readDb();
 
   if (db.users.length === 0 && emailNorm === BOOTSTRAP_ADMIN_EMAIL) {
+    if (String(senha) !== BOOTSTRAP_ADMIN_PASSWORD) {
+      return res.status(401).json({ sucesso: false, erro: 'Credenciais iniciais do administrador inválidas.' });
+    }
     const admin = {
       id: crypto.randomUUID(),
       nome: 'Administrador CEEAC',
@@ -415,10 +419,13 @@ function hashPassword(password) {
 }
 
 function verifyPassword(password, storedHash) {
-  const [salt, derivedHash] = String(storedHash || '').split(':', 2);
-  if (!salt || !derivedHash) {
+  const storedValue = String(storedHash || '');
+  const separatorIndex = storedValue.indexOf(':');
+  if (separatorIndex <= 0) {
     return false;
   }
+  const salt = storedValue.slice(0, separatorIndex);
+  const derivedHash = storedValue.slice(separatorIndex + 1);
 
   const candidateHash = crypto.scryptSync(String(password), `${salt}:${PASSWORD_PEPPER}`, 64).toString('hex');
   const derivedBuffer = Buffer.from(derivedHash, 'hex');
