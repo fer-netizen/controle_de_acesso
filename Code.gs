@@ -114,7 +114,7 @@ function include(filename) {
 // ============================================================================
 // UPLOAD DE IMAGENS PARA O GOOGLE DRIVE
 // ============================================================================
-const ID_PASTA_IMAGENS = "COLOQUE_O_ID_DA_SUA_PASTA_AQUI";
+const ID_PASTA_IMAGENS = "1l6a9njLB7g9t7IlpuM_uFk_-xPHO2SUR";
 
 function salvarImagemNoDrive(base64Data, nomeArquivo) {
   try {
