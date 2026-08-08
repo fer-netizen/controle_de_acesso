@@ -351,15 +351,15 @@ function executarGravacaoSegura(params) {
   const db = readDb();
   const payload = {
     id: crypto.randomUUID(),
-    cod: String(params.cod || '').trim(),
-    nomeFuncionario: String(params.nome_funcionario || '').trim(),
-    modelo01: String(params.modelo_01 || '').trim(),
-    placa: normalizePlate(params.placa || ''),
-    modelo02: String(params.modelo || '').trim(),
-    placa2: normalizePlate(params.placa2 || ''),
-    periodo: String(params.periodo || '').trim(),
-    secretaria: String(params.secretaria || '').trim(),
-    status: String(params.status || 'ATIVO').trim().toUpperCase(),
+    cod: sanitizeText(params.cod, 40),
+    nomeFuncionario: sanitizeText(params.nome_funcionario, 120),
+    modelo01: sanitizeText(params.modelo_01, 120),
+    placa: normalizePlate(params.placa || '').slice(0, 10),
+    modelo02: sanitizeText(params.modelo, 120),
+    placa2: normalizePlate(params.placa2 || '').slice(0, 10),
+    periodo: sanitizeText(params.periodo, 60),
+    secretaria: sanitizeText(params.secretaria, 80),
+    status: sanitizeText(params.status || 'ATIVO', 20).toUpperCase(),
     criadoEm: new Date().toISOString()
   };
 
@@ -447,6 +447,10 @@ function normalizeEmail(email) {
 
 function normalizePlate(value) {
   return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+function sanitizeText(value, maxLength) {
+  return String(value || '').trim().slice(0, maxLength);
 }
 
 function buildSessionToken(user) {
