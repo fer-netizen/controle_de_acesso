@@ -40,7 +40,7 @@ app.get('/health', (_req, res) => {
 });
 
 app.get('/', (req, res) => {
-  if (req.query.placa || req.query.nome_funcionario || req.query.action === 'salvar') {
+  if (req.query.action === 'salvar') {
     const auth = authenticateRequest(req, 'ADMINISTRADOR');
     if (auth.error) {
       return res.status(auth.error.status).json({ sucesso: false, erro: auth.error.message });
@@ -418,7 +418,7 @@ function hashPassword(password) {
 }
 
 function verifyPassword(password, storedHash) {
-  const [salt, derivedHash] = String(storedHash || '').split(':');
+  const [salt, derivedHash] = String(storedHash || '').split(':', 2);
   if (!salt || !derivedHash) {
     return false;
   }
@@ -485,8 +485,8 @@ function verifySessionToken(token) {
   const encodedPayload = token.slice(0, separatorIndex);
   const signature = token.slice(separatorIndex + 1);
   const expectedSignature = crypto.createHmac('sha256', SESSION_SECRET).update(encodedPayload).digest('base64url');
-  const signatureBuffer = Buffer.from(signature);
-  const expectedBuffer = Buffer.from(expectedSignature);
+  const signatureBuffer = Buffer.from(signature, 'base64url');
+  const expectedBuffer = Buffer.from(expectedSignature, 'base64url');
   if (signatureBuffer.length !== expectedBuffer.length) {
     return null;
   }
