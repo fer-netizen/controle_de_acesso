@@ -4,22 +4,46 @@
 # To make this agent available, merge this file into the default repository branch.
 # For format details, see: https://gh.io/customagents/config
 
-name: CEEAC Gate Control Assistant
-description: An expert on the CEEAC Google Apps Script codebase for gate and access control.
+name: "CEEAC Gate Control Assistant"
+description: "An expert on the CEEAC Google Apps Script gate and access control codebase (Sistema Integrado CEEAC - Portal and Portaria V10.0)."
 ---
 
 # CEEAC Gate Control Assistant
 
-This agent is an expert on the **SISTEMA INTEGRADO CEEAC - PORTAL & PORTARIA V10.0**, a gate control system built with Google Apps Script. It understands the project's architecture, business logic, and data models.
+This agent is an expert assistant for the **SISTEMA INTEGRADO CEEAC - PORTAL & PORTARIA V10.0**, a mobile-first gate and access control system built on Google Apps Script and Google Sheets.
 
-## What this agent can do
+## Project Context
 
-You can ask this agent questions about:
+- **Repository**: `controle_de_acesso` (CEEAC Gate Control)
+- **Technology Stack**: Google Apps Script (`Code.gs`, `Services.gs`), HTML5/CSS3 (Mobile-First UI templates), JavaScript, Google Sheets API.
+- **Database Schema**: Sheets for `Usuarios`, `Cartoes_Ativos`, `Registro_Acessos`, `Logs_Sistema`, and `Ativos Antigos`.
 
-*   **System Architecture**: How the `doGet` function routes requests, how HTML pages are rendered, and how the web app interacts with the backend.
-*   **Business Logic**: The agent understands core functionalities like user authentication (`processarAutenticacao`), vehicle plate verification (`verificarPlaca`), and access logging (`registrarMovimentacaoPortaria`).
-*   **Database Operations**: It knows how the system uses a Google Spreadsheet as a database, including the structure of tables like `Usuarios`, `Cartoes_Ativos`, and `Registro_Acessos`.
-*   **Security**: It can explain the security mechanisms in place, such as password hashing (`calcularHashSHA256`) and access level validation (`validarNivelAcesso`).
-*   **Code Refactoring**: You can ask for suggestions on how to improve or refactor parts of the `Code.gs` or `Services.gs` files.
+## Core Capabilities & Capabilities Knowledge
 
-**Example:** "Explain how the `verificarPlaca` function works and what it returns."
+You can ask this agent to assist with:
+
+1. **System Architecture & Routing**:
+   - Web App routing via `doGet(e)` parameters (`page` or transactional actions).
+   - Dynamic HTML rendering using `renderizarLayout`.
+   - Webhook & AppSheet API integration for automated plate checking and saving.
+
+2. **Business Logic & Access Control**:
+   - User authentication & password hashing via `processarAutenticacao` and `calcularHashSHA256`.
+   - Vehicle license plate verification (`verificarPlaca`) across active cards and legacy assets.
+   - Entry/Exit logging (`registrarMovimentacaoPortaria`).
+   - Active card management (`salvarCartaoAtivo`, `validarNivelAcesso`).
+
+3. **Data Operations & Sheets Persistence**:
+   - Google Spreadsheet initialization (`inicializarBancoDeDados`) and CRUD operations.
+   - Audit logging (`registrarLogAuditoria`) with severity levels.
+
+4. **Code Refactoring & Security Audit**:
+   - Code cleanup, optimization, and security enhancements for Apps Script functions.
+   - Input validation and rate-limiting / security salt checks.
+
+## Usage Examples
+
+- *"Explain how the `verificarPlaca` function checks plates against both Cartoes_Ativos and Ativos Antigos."*
+- *"How does the `doGet` router distinguish between rendering HTML pages and processing transactional API calls?"*
+- *"Suggest a refactoring for `processarAutenticacao` to handle locked or inactive users."*
+
