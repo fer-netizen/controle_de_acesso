@@ -7,6 +7,7 @@ const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'ceeac-db.json');
+const BOOTSTRAP_ADMIN_EMAIL = normalizeEmail(getRequiredEnv('BOOTSTRAP_ADMIN_EMAIL'));
 const PASSWORD_PEPPER = getRequiredEnv('PASSWORD_PEPPER');
 const SESSION_SECRET = getRequiredEnv('SESSION_SECRET');
 const SESSION_TTL_MS = 1000 * 60 * 60 * 12;
@@ -40,17 +41,13 @@ app.get('/health', (_req, res) => {
 });
 
 app.get('/', (req, res) => {
-  if (req.query.action === 'salvar') {
-    const auth = authenticateRequest(req, 'ADMINISTRADOR');
-    if (auth.error) {
-      return res.status(auth.error.status).json({ sucesso: false, erro: auth.error.message });
-    }
-    return res.json(executarGravacaoSegura(req.query));
-  }
-
   const page = String(req.query.page || 'login').toLowerCase();
   const fileName = PAGE_MAP[page] || PAGE_MAP.login;
   return res.sendFile(path.join(__dirname, 'public', fileName));
+});
+
+app.post('/api/legacy/save', requireAuth('ADMINISTRADOR'), (req, res) => {
+  return res.json(executarGravacaoSegura(req.body || {}));
 });
 
 app.post('/api/auth/login', (req, res) => {
@@ -58,7 +55,7 @@ app.post('/api/auth/login', (req, res) => {
   const emailNorm = normalizeEmail(email);
   const db = readDb();
 
-  if (db.users.length === 0 && emailNorm === 'admin@secel.online') {
+  if (db.users.length === 0 && emailNorm === BOOTSTRAP_ADMIN_EMAIL) {
     const admin = {
       id: crypto.randomUUID(),
       nome: 'Administrador CEEAC',

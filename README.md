@@ -5,13 +5,15 @@ Aplicação containerizável derivada do projeto original em Google Apps Script 
 ## Executar localmente
 
 ```bash
-export PASSWORD_PEPPER="$(openssl rand -hex 32)"
-export SESSION_SECRET="$(openssl rand -hex 32)"
+export BOOTSTRAP_ADMIN_EMAIL='admin@secel.online'
+export PASSWORD_PEPPER='gere-uma-vez-e-guarde-em-seguro'
+export SESSION_SECRET='gere-uma-vez-e-guarde-em-seguro'
 npm install
 npm start
 ```
 
 A aplicação sobe por padrão em `http://localhost:3000`.
+Use valores distintos e persistentes para `PASSWORD_PEPPER` e `SESSION_SECRET`; se eles mudarem entre reinícios, logins e sessões anteriores deixam de funcionar.
 
 ## Fluxo inicial
 
@@ -24,9 +26,13 @@ A aplicação sobe por padrão em `http://localhost:3000`.
 
 ```bash
 docker build -t fernandohonoratoo/gate_control:latest .
-docker run --rm -p 3000:3000 \
-  -e PASSWORD_PEPPER="$(openssl rand -hex 32)" \
-  -e SESSION_SECRET="$(openssl rand -hex 32)" \
+cat <<'EOF' > .env
+BOOTSTRAP_ADMIN_EMAIL=admin@secel.online
+PASSWORD_PEPPER=gere-uma-vez-e-guarde-em-seguro
+SESSION_SECRET=gere-uma-vez-e-guarde-em-seguro
+EOF
+
+docker run --rm -p 3000:3000 --env-file .env \
   fernandohonoratoo/gate_control:latest
 ```
 
