@@ -111,6 +111,31 @@ function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
+// ============================================================================
+// UPLOAD DE IMAGENS PARA O GOOGLE DRIVE
+// ============================================================================
+const ID_PASTA_IMAGENS = "COLOQUE_O_ID_DA_SUA_PASTA_AQUI";
+
+function salvarImagemNoDrive(base64Data, nomeArquivo) {
+  try {
+    const pasta = DriveApp.getFolderById(ID_PASTA_IMAGENS);
+
+    // Separa o cabeçalho do base64 (ex: "data:image/jpeg;base64,...")
+    const base64Limpo = base64Data.split(',')[1];
+    const tipoMime = base64Data.split(';')[0].split(':')[1];
+
+    const blob = Utilities.newBlob(Utilities.base64Decode(base64Limpo), tipoMime, nomeArquivo);
+    const arquivo = pasta.createFile(blob);
+
+    registrarLogAuditoria("INFO", "UPLOAD_IMAGEM", "SYSTEM", `Imagem salva: ${nomeArquivo}`);
+
+    return { sucesso: true, url: arquivo.getUrl(), id: arquivo.getId() };
+  } catch (erro) {
+    registrarLogAuditoria("ERROR", "UPLOAD_FALHA", "SYSTEM", erro.toString());
+    return { sucesso: false, erro: erro.toString() };
+  }
+}
+
 /**
  * Menus superiores para uso interno na planilha Desktop
  */
