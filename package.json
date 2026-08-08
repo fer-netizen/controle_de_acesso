@@ -1,0 +1,20 @@
+{
+  "name": "controle_de_acesso",
+  "version": "1.0.0",
+  "description": "Containerized CEEAC access control web app",
+  "main": "server.js",
+  "scripts": {
+    "test": "node --test",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://localhost:26831/fer-netizen/controle_de_acesso"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

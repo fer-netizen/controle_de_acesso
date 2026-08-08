@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scanner de Placas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body class="bg-slate-950 flex flex-col justify-between min-h-screen">
+  <nav class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <a href="/?page=portaria" class="p-2 bg-slate-800 rounded-lg text-slate-300"><i data-lucide="arrow-left" class="w-4 h-4"></i></a>
+      <h1 class="text-xs font-black text-slate-200 uppercase tracking-widest">Scanner de Placas</h1>
+    </div>
+  </nav>
+
+  <main class="flex-1 flex flex-col items-center justify-center p-4">
+    <div class="w-full max-w-sm aspect-video bg-slate-900/60 border-2 border-dashed border-teal-500/40 rounded-3xl flex flex-col items-center justify-center text-center p-6 relative overflow-hidden shadow-lg">
+      <div class="absolute inset-0 bg-gradient-to-b from-teal-500/10 via-transparent to-transparent animate-pulse"></div>
+      <i data-lucide="camera" class="text-teal-400 w-12 h-12 mb-3 animate-bounce"></i>
+      <h3 class="text-slate-200 font-extrabold text-sm uppercase">Câmera de Reconhecimento</h3>
+      <p class="text-slate-500 text-xs mt-1">Aponte a câmera do smartphone horizontalmente em direção à placa.</p>
+    </div>
+  </main>
+
+  <footer class="p-4 bg-slate-900 border-t border-slate-800">
+    <button onclick="alert('Funcionalidade de OCR Inteligente de Câmeras em desenvolvimento para a API Mobile.')" class="w-full bg-teal-500 hover:bg-teal-600 text-slate-950 font-bold py-3.5 rounded-xl transition flex items-center justify-center gap-2">
+      <i data-lucide="aperture" class="w-5 h-5"></i> Iniciar Captura de Vídeo
+    </button>
+  </footer>
+
+  <script src="/assets/app.js"></script>
+  <script>
+    requireSession().then((session) => {
+      if (session) {
+        lucide.createIcons();
+      }
+    });
+  </script>
+</body>
+</html>

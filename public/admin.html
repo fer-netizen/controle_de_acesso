@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Admin CEEAC</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body class="bg-slate-950 pb-8">
+  <nav class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center">
+        <i data-lucide="shield-alert" class="text-slate-950 w-5 h-5"></i>
+      </div>
+      <div>
+        <h1 class="text-xs font-black uppercase tracking-wider text-indigo-400">CEEAC CONTROL</h1>
+        <p class="text-[9px] text-slate-400 font-bold uppercase">Painel Administrativo</p>
+      </div>
+    </div>
+    <button onclick="logoff()" class="p-2 bg-rose-950/60 text-rose-400 rounded-lg"><i data-lucide="log-out" class="w-4 h-4"></i></button>
+  </nav>
+
+  <main class="max-w-md mx-auto p-4 space-y-5">
+    <div class="glassmorphism p-5 rounded-2xl shadow-sm space-y-3">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-slate-200 text-xs font-bold flex items-center gap-1.5"><i data-lucide="users" class="text-slate-400 w-4 h-4"></i> Moderação de Cadastros</h2>
+        <button onclick="gerarAcessoTemporario()" class="px-3 py-2 text-[10px] font-bold rounded-lg bg-sky-950 text-sky-300 border border-sky-800">Acesso Temporário</button>
+      </div>
+      <div id="lista-pendentes" class="space-y-3">
+        <p class="text-slate-500 text-xs italic text-center">Buscando requisições...</p>
+      </div>
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button onclick="revogarTemporarios()" class="bg-rose-950/50 text-rose-300 font-bold py-3 rounded-xl border border-rose-900/60 text-xs">Revogar Temporários</button>
+        <button onclick="colorirEstrutura()" class="bg-slate-800 text-slate-200 font-bold py-3 rounded-xl border border-slate-700 text-xs">Padronizar Cores</button>
+      </div>
+    </div>
+
+    <div class="glassmorphism p-5 rounded-2xl shadow-sm space-y-3">
+      <h2 class="text-slate-200 text-xs font-bold flex items-center gap-1.5"><i data-lucide="plus-circle" class="text-slate-400 w-4 h-4"></i> Emitir Novo Cartão</h2>
+      <form id="card-form" onsubmit="emitirCartao(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-[9px] font-bold text-slate-400 mb-1">Dono do Cartão</label>
+          <input type="text" id="card-prop" required placeholder="Nome do Funcionário" class="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white placeholder-slate-600 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[9px] font-bold text-slate-400 mb-1">Placa 01</label>
+            <input type="text" id="card-p1" required placeholder="ABC1C34" class="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white placeholder-slate-600 outline-none uppercase">
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold text-slate-400 mb-1">Placa 02 (Opcional)</label>
+            <input type="text" id="card-p2" placeholder="XYZ9K99" class="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white placeholder-slate-600 outline-none uppercase">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[9px] font-bold text-slate-400 mb-1">Secretaria</label>
+            <input type="text" id="card-sec" required placeholder="SECRETARIA" class="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white placeholder-slate-600 outline-none uppercase">
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold text-slate-400 mb-1">Validade</label>
+            <input type="text" id="card-val" required placeholder="31/12/2026" class="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white placeholder-slate-600 outline-none">
+          </div>
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition">Salvar & Ativar</button>
+      </form>
+    </div>
+
+    <div class="glassmorphism p-5 rounded-2xl shadow-sm space-y-3">
+      <h2 class="text-slate-200 text-xs font-bold flex items-center gap-1.5"><i data-lucide="terminal" class="text-slate-400 w-4 h-4"></i> Logs de Auditoria</h2>
+      <div id="logs-bin" class="bg-slate-950 border border-slate-800 text-slate-400 font-mono text-[10px] p-3 rounded-xl max-h-48 overflow-y-auto space-y-1.5"></div>
+    </div>
+  </main>
+
+  <script src="/assets/app.js"></script>
+  <script>
+    let session = null;
+
+    window.addEventListener('load', async () => {
+      session = await requireSession({ admin: true });
+      if (!session) return;
+      await carregarDadosAdmin();
+      lucide.createIcons();
+    });
+
+    function logoff() {
+      clearSession();
+      redirectToPage('login');
+    }
+
+    async function carregarDadosAdmin() {
+      try {
+        const res = await api('/api/admin/dashboard');
+        renderizarUsuariosPendentes(res.usuariosPendentes);
+        renderizarLogs(res.logs);
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    function renderizarUsuariosPendentes(usuarios) {
+      const container = document.getElementById('lista-pendentes');
+      if (usuarios.length === 0) {
+        container.innerHTML = '<p class="text-slate-500 text-xs italic text-center">Nenhuma moderação pendente.</p>';
+        return;
+      }
+      container.innerHTML = '';
+      usuarios.forEach((user) => {
+        const div = document.createElement('div');
+        div.className = 'p-4 bg-slate-900/60 border border-slate-800 rounded-xl space-y-3';
+        div.innerHTML = `
+          <div>
+            <p class="font-bold text-slate-200 text-xs">${escapeHtml(user.nome)}</p>
+            <p class="text-[10px] text-slate-400">${escapeHtml(user.email)}</p>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="moderar('${user.id}', 'OPERADOR_PORTARIA', 'APROVAR')" class="bg-emerald-950 text-emerald-400 font-bold py-2 rounded-lg text-[10px] border border-emerald-800">Liberar Vigia</button>
+            <button onclick="moderar('${user.id}', 'ADMINISTRADOR', 'APROVAR')" class="bg-indigo-950 text-indigo-400 font-bold py-2 rounded-lg text-[10px] border border-indigo-800">Liberar Admin</button>
+            <button onclick="moderar('${user.id}', '', 'RECUSAR')" class="col-span-2 bg-rose-950/40 text-rose-400 font-bold py-2 rounded-lg text-[10px] border border-rose-900/60">Recusar Cadastro</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function renderizarLogs(logs) {
+      const bin = document.getElementById('logs-bin');
+      bin.innerHTML = '';
+      logs.forEach((log) => {
+        const p = document.createElement('p');
+        p.innerHTML = `<span class="text-indigo-400">[${escapeHtml(new Date(log.data).toLocaleTimeString())}]</span> <span class="text-amber-400 font-bold">${escapeHtml(log.severidade)}</span> - ${escapeHtml(log.acao)}: ${escapeHtml(log.detalhes)}`;
+        bin.appendChild(p);
+      });
+    }
+
+    async function moderar(idUsuario, novoPerfil, acao) {
+      try {
+        const res = await api('/api/admin/moderate', {
+          method: 'POST',
+          body: JSON.stringify({ idUsuario, novoPerfil, acao })
+        });
+        alert(res.mensagem);
+        await carregarDadosAdmin();
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    async function emitirCartao(event) {
+      event.preventDefault();
+      const cartao = {
+        nomeProprietario: document.getElementById('card-prop').value,
+        placa01: document.getElementById('card-p1').value,
+        placa02: document.getElementById('card-p2').value,
+        secretaria: document.getElementById('card-sec').value,
+        validade: document.getElementById('card-val').value
+      };
+
+      try {
+        const res = await api('/api/admin/cards', {
+          method: 'POST',
+          body: JSON.stringify(cartao)
+        });
+        alert(res.mensagem);
+        document.getElementById('card-form').reset();
+        await carregarDadosAdmin();
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    async function gerarAcessoTemporario() {
+      const nome = prompt('Nome do Visitante:');
+      if (nome === null) return;
+      const placa = prompt('Placa do Veículo:');
+      if (placa === null) return;
+
+      try {
+        const res = await api('/api/admin/temp-access', {
+          method: 'POST',
+          body: JSON.stringify({ nome, placa })
+        });
+        alert(res.mensagem);
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    async function revogarTemporarios() {
+      if (!confirm('Revogar acessos temporários de visitantes ativos?')) return;
+      try {
+        const res = await api('/api/admin/revoke-temp', { method: 'POST' });
+        alert(res.mensagem);
+        await carregarDadosAdmin();
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    async function colorirEstrutura() {
+      try {
+        const res = await api('/api/admin/colorize', { method: 'POST' });
+        alert(res.mensagem);
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+  </script>
+</body>
+</html>
