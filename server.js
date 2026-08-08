@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
@@ -31,8 +32,25 @@ const PAGE_MAP = {
   portal: 'card.html'
 };
 
+const generalRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { sucesso: false, erro: 'Muitas requisições. Tente novamente em instantes.' }
+});
+
+const authRateLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { sucesso: false, erro: 'Muitas tentativas de autenticação. Aguarde alguns minutos.' }
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(generalRateLimiter);
 app.use('/assets', express.static(path.join(__dirname, 'public')));
 
 ensureDataFile();
@@ -51,7 +69,7 @@ app.post('/api/legacy/save', requireAuth('ADMINISTRADOR'), (req, res) => {
   return res.json(executarGravacaoSegura(req.body || {}));
 });
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', authRateLimiter, (req, res) => {
   const { email = '', senha = '' } = req.body || {};
   const emailNorm = normalizeEmail(email);
   const db = readDb();
@@ -98,7 +116,7 @@ app.post('/api/auth/login', (req, res) => {
   });
 });
 
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', authRateLimiter, (req, res) => {
   const { nome = '', email = '', senha = '' } = req.body || {};
   const nomeTrim = String(nome).trim();
   const emailNorm = normalizeEmail(email);
