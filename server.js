@@ -7,8 +7,8 @@ const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'ceeac-db.json');
-const PASSWORD_SALT = process.env.PRIVATE_SECURITY_SALT || 'CEEAC_SECEL_SECRET_SALT_2026';
-const SESSION_SECRET = process.env.SESSION_SECRET || 'CEEAC_CONTROL_SESSION_SECRET_2026';
+const PASSWORD_PEPPER = getRequiredEnv('PASSWORD_PEPPER');
+const SESSION_SECRET = getRequiredEnv('SESSION_SECRET');
 const SESSION_TTL_MS = 1000 * 60 * 60 * 12;
 
 const DEFAULT_DB = {
@@ -41,6 +41,10 @@ app.get('/health', (_req, res) => {
 
 app.get('/', (req, res) => {
   if (req.query.placa || req.query.nome_funcionario || req.query.action === 'salvar') {
+    const auth = authenticateRequest(req, 'ADMINISTRADOR');
+    if (auth.error) {
+      return res.status(auth.error.status).json({ sucesso: false, erro: auth.error.message });
+    }
     return res.json(executarGravacaoSegura(req.query));
   }
 
@@ -59,7 +63,7 @@ app.post('/api/auth/login', (req, res) => {
       id: crypto.randomUUID(),
       nome: 'Administrador CEEAC',
       email: emailNorm,
-      senhaHash: calcularHashSHA256(senha),
+      senhaHash: hashPassword(senha),
       perfil: 'ADMINISTRADOR',
       status: 'ATIVO',
       criadoEm: new Date().toISOString()
@@ -75,7 +79,7 @@ app.post('/api/auth/login', (req, res) => {
     return res.status(404).json({ sucesso: false, erro: 'Este e-mail não possui cadastro.' });
   }
 
-  if (user.senhaHash !== calcularHashSHA256(senha)) {
+  if (!verifyPassword(senha, user.senhaHash)) {
     return res.status(401).json({ sucesso: false, erro: 'Senha incorreta.' });
   }
 
@@ -112,7 +116,7 @@ app.post('/api/auth/register', (req, res) => {
     id: crypto.randomUUID(),
     nome: nomeTrim,
     email: emailNorm,
-    senhaHash: calcularHashSHA256(senha),
+    senhaHash: hashPassword(senha),
     perfil: 'OPERADOR_PORTARIA',
     status: 'PENDENTE',
     criadoEm: new Date().toISOString()
@@ -123,7 +127,7 @@ app.post('/api/auth/register', (req, res) => {
   return res.json({ sucesso: true, mensagem: 'Cadastro efetuado! Aguarde liberação do administrador.' });
 });
 
-app.get('/api/vehicles/:placa', (req, res) => {
+app.get('/api/vehicles/:placa', requireAuth(), (req, res) => {
   const result = verificarPlaca(req.params.placa);
   const statusCode = result.sucesso ? 200 : 400;
   return res.status(statusCode).json(result);
@@ -338,7 +342,9 @@ function readDb() {
 }
 
 function writeDb(db) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2));
+  const tempFile = `${DATA_FILE}.tmp`;
+  fs.writeFileSync(tempFile, JSON.stringify(db, null, 2));
+  fs.renameSync(tempFile, DATA_FILE);
 }
 
 function executarGravacaoSegura(params) {
@@ -405,8 +411,25 @@ function appendSystemLog(db, severidade, acao, usuario, detalhes) {
   });
 }
 
-function calcularHashSHA256(senhaText) {
-  return crypto.createHash('sha256').update(String(senhaText) + PASSWORD_SALT).digest('hex');
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(String(password), `${salt}:${PASSWORD_PEPPER}`, 64).toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password, storedHash) {
+  const [salt, derivedHash] = String(storedHash || '').split(':');
+  if (!salt || !derivedHash) {
+    return false;
+  }
+
+  const candidateHash = crypto.scryptSync(String(password), `${salt}:${PASSWORD_PEPPER}`, 64).toString('hex');
+  const derivedBuffer = Buffer.from(derivedHash, 'hex');
+  const candidateBuffer = Buffer.from(candidateHash, 'hex');
+  if (derivedBuffer.length !== candidateBuffer.length) {
+    return false;
+  }
+  return crypto.timingSafeEqual(derivedBuffer, candidateBuffer);
 }
 
 function serializeUser(user) {
@@ -440,35 +463,27 @@ function buildSessionToken(user) {
 
 function requireAuth(requiredPerfil) {
   return (req, res, next) => {
-    const authHeader = String(req.headers.authorization || '');
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-    const payload = verifySessionToken(token);
-
-    if (!payload) {
-      return res.status(401).json({ sucesso: false, erro: 'Sessão inválida ou expirada.' });
+    const auth = authenticateRequest(req, requiredPerfil);
+    if (auth.error) {
+      return res.status(auth.error.status).json({ sucesso: false, erro: auth.error.message });
     }
-
-    const db = readDb();
-    const user = db.users.find((item) => item.id === payload.sub && normalizeEmail(item.email) === normalizeEmail(payload.email));
-    if (!user || user.status !== 'ATIVO') {
-      return res.status(401).json({ sucesso: false, erro: 'Usuário não autorizado.' });
-    }
-
-    if (requiredPerfil && user.perfil !== requiredPerfil) {
-      return res.status(403).json({ sucesso: false, erro: 'Nível de permissão insuficiente.' });
-    }
-
-    req.user = user;
+    req.user = auth.user;
     return next();
   };
 }
 
 function verifySessionToken(token) {
-  if (!token || !token.includes('.')) {
+  if (!token) {
     return null;
   }
 
-  const [encodedPayload, signature] = token.split('.');
+  const separatorIndex = token.indexOf('.');
+  if (separatorIndex <= 0 || token.indexOf('.', separatorIndex + 1) !== -1) {
+    return null;
+  }
+
+  const encodedPayload = token.slice(0, separatorIndex);
+  const signature = token.slice(separatorIndex + 1);
   const expectedSignature = crypto.createHmac('sha256', SESSION_SECRET).update(encodedPayload).digest('base64url');
   const signatureBuffer = Buffer.from(signature);
   const expectedBuffer = Buffer.from(expectedSignature);
@@ -488,4 +503,34 @@ function verifySessionToken(token) {
   } catch (_error) {
     return null;
   }
+}
+
+function authenticateRequest(req, requiredPerfil) {
+  const authHeader = String(req.headers.authorization || '');
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  const payload = verifySessionToken(token);
+
+  if (!payload) {
+    return { error: { status: 401, message: 'Sessão inválida ou expirada.' } };
+  }
+
+  const db = readDb();
+  const user = db.users.find((item) => item.id === payload.sub && normalizeEmail(item.email) === normalizeEmail(payload.email));
+  if (!user || user.status !== 'ATIVO') {
+    return { error: { status: 401, message: 'Usuário não autorizado.' } };
+  }
+
+  if (requiredPerfil && user.perfil !== requiredPerfil) {
+    return { error: { status: 403, message: 'Nível de permissão insuficiente.' } };
+  }
+
+  return { user };
+}
+
+function getRequiredEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
 }

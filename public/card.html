@@ -31,7 +31,11 @@
 
   <script src="/assets/app.js"></script>
   <script>
-    lucide.createIcons();
+    window.addEventListener('load', async () => {
+      const session = await requireSession();
+      if (!session) return;
+      lucide.createIcons();
+    });
 
     async function consultarCartao() {
       const placa = normalizePlate(document.getElementById('consulta-placa').value);

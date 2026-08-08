@@ -5,6 +5,8 @@ Aplicação containerizável derivada do projeto original em Google Apps Script 
 ## Executar localmente
 
 ```bash
+export PASSWORD_PEPPER='troque-por-um-segredo-forte'
+export SESSION_SECRET='troque-por-um-segredo-forte'
 npm install
 npm start
 ```
@@ -21,8 +23,11 @@ A aplicação sobe por padrão em `http://localhost:3000`.
 ## Build Docker
 
 ```bash
-docker build -t fernandohonoratoo/gate_control:latest /home/runner/work/controle_de_acesso/controle_de_acesso
-docker run --rm -p 3000:3000 fernandohonoratoo/gate_control:latest
+docker build -t fernandohonoratoo/gate_control:latest .
+docker run --rm -p 3000:3000 \
+  -e PASSWORD_PEPPER='troque-por-um-segredo-forte' \
+  -e SESSION_SECRET='troque-por-um-segredo-forte' \
+  fernandohonoratoo/gate_control:latest
 ```
 
 ## Push Docker Hub
