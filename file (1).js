@@ -16,7 +16,7 @@
  */
 function obterPropriedade(chave) {
   const valor = PropertiesService.getScriptProperties().getProperty(chave);
-  if (!valor) {
+  if (valor === null || valor === "") {
     throw new Error(
       `Propriedade de script obrigatória não configurada: "${chave}". ` +
       "Consulte README_SEGURANCA.md para instruções de configuração."
