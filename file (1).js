@@ -3,14 +3,31 @@
  * SISTEMA INTEGRADO CEEAC - PORTAL & PORTARIA V10.0 (MOBILE-FIRST)
  * Arquivo: Services.gs | Transações do Banco de Dados, Segurança e API
  * ============================================================================
+ *
+ * SEGURANÇA: Nenhum segredo deve ser hardcoded neste arquivo.
+ * Configure todas as propriedades sensíveis via:
+ *   Apps Script > Configurações do projeto > Propriedades de script
+ * Consulte README_SEGURANCA.md para a lista completa de chaves necessárias.
  */
 
-const PRIVATE_SECURITY_SALT = "CEEAC_SECEL_SECRET_SALT_2026";
+/**
+ * Retorna uma propriedade de script por chave.
+ * Lança um erro claro se a propriedade não estiver configurada.
+ */
+function obterPropriedade(chave) {
+  const valor = PropertiesService.getScriptProperties().getProperty(chave);
+  if (!valor) {
+    throw new Error(
+      `Propriedade de script obrigatória não configurada: "${chave}". ` +
+      "Consulte README_SEGURANCA.md para instruções de configuração."
+    );
+  }
+  return valor;
+}
 
 function obterConexaoPlanilha() {
-  const SPREADSHEET_ID_LOCAL = "1ibZ43sYryxg7PqV2mCKsdE1e26aX4KLWXBh2QLTxe1o";
   try {
-    return SpreadsheetApp.openById(SPREADSHEET_ID_LOCAL);
+    return SpreadsheetApp.openById(obterPropriedade("SPREADSHEET_ID"));
   } catch (error) {
     return SpreadsheetApp.getActiveSpreadsheet();
   }
@@ -121,10 +138,26 @@ function processarAutocadastro(nome, email, senha) {
   }
 }
 
+/**
+ * AVISO DE SEGURANÇA:
+ * SHA-256 com salt estático NÃO é adequado para armazenamento de senhas.
+ * Algoritmos como bcrypt, scrypt ou Argon2 são resistentes a ataques de força
+ * bruta por design (fator de custo adaptável), ao contrário do SHA-256 simples.
+ *
+ * Google Apps Script não oferece suporte nativo a esses algoritmos.
+ * RECOMENDAÇÃO: Migre a autenticação para Firebase Authentication ou
+ * Google Identity Platform, delegando a validação de credenciais a um
+ * serviço externo seguro em vez de comparar hashes localmente.
+ *
+ * Esta função é mantida temporariamente apenas para compatibilidade com
+ * registros existentes. Nenhuma senha nova deve ser criada com este método.
+ * Execute uma redefinição de senha forçada para todos os usuários.
+ */
 function calcularHashSHA256(senhaText) {
+  const salt = obterPropriedade("PASSWORD_SALT");
   const hashDigest = Utilities.computeDigest(
-    Utilities.DigestAlgorithm.SHA_256, 
-    senhaText + PRIVATE_SECURITY_SALT, 
+    Utilities.DigestAlgorithm.SHA_256,
+    senhaText + salt,
     Utilities.Charset.UTF_8
   );
   let hashOutput = "";
