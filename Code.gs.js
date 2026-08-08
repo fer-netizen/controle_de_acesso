@@ -3,9 +3,12 @@
  * SISTEMA INTEGRADO CEEAC - PORTAL & PORTARIA V10.0 (MOBILE-FIRST)
  * Arquivo: Code.gs | Roteamento Avançado e Renderização de UI
  * ============================================================================
+ *
+ * SEGURANÇA: Nenhum segredo deve ser hardcoded neste arquivo.
+ * Configure todas as propriedades sensíveis via:
+ *   Apps Script > Configurações do projeto > Propriedades de script
+ * Consulte README_SEGURANCA.md para a lista completa de chaves necessárias.
  */
-
-const SPREADSHEET_ID_CEEAC = "1ibZ43sYryxg7PqV2mCKsdE1e26aX4KLWXBh2QLTxe1o";
 
 /**
  * ROTEADOR CENTRAL (doGet)
@@ -63,7 +66,7 @@ function executarGravacaoSegura(params) {
     var secretaria      = (params.secretaria || "").toString().trim();
     var status          = (params.status || "ATIVO").toString().trim().toUpperCase();
 
-    var ss = SpreadsheetApp.openById(SPREADSHEET_ID_CEEAC);
+    var ss = SpreadsheetApp.openById(obterPropriedade("SPREADSHEET_ID"));
     var sheet = ss.getSheetByName("Ativos Antigos");
     
     if (!sheet) throw new Error("Aba 'Ativos Antigos' não localizada.");
