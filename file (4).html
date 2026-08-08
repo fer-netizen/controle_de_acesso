@@ -54,7 +54,12 @@
             <input type="text" id="card-val" required placeholder="31/12/2026" class="w-full px-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white placeholder-slate-600 outline-none">
           </div>
         </div>
-        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition">Salvar & Ativar</button>
+        <div>
+          <label class="block text-[9px] font-bold text-slate-400 mb-1">Foto do Documento / Veículo (Opcional)</label>
+          <input type="file" id="card-foto" accept="image/png,image/jpeg" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-slate-400 text-xs outline-none file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-indigo-700 file:text-white file:text-xs file:font-bold">
+          <p id="foto-status" class="text-[9px] text-slate-500 mt-1 hidden"></p>
+        </div>
+        <button type="submit" id="btn-emitir" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition">Salvar & Ativar</button>
       </form>
     </div>
 
@@ -150,17 +155,54 @@
         validade: document.getElementById('card-val').value
       };
 
-      google.script.run
-        .withSuccessHandler(function(res) {
-          if (res.sucesso) {
-            alert(res.mensagem);
-            document.querySelector('form').reset();
-            carregarDadosAdmin();
-          } else {
-            alert("Erro: " + res.erro);
-          }
-        })
-        .processarEmissaoCartao(cartao, session.email);
+      const input = document.getElementById('card-foto');
+      const btn = document.getElementById('btn-emitir');
+      const statusEl = document.getElementById('foto-status');
+
+      function salvarCartaoComFoto(urlFoto) {
+        if (urlFoto) cartao.urlFoto = urlFoto;
+        btn.textContent = "Salvando...";
+        btn.disabled = true;
+        google.script.run
+          .withSuccessHandler(function(res) {
+            btn.textContent = "Salvar & Ativar";
+            btn.disabled = false;
+            if (res.sucesso) {
+              alert(res.mensagem);
+              document.querySelector('form').reset();
+              statusEl.classList.add('hidden');
+              carregarDadosAdmin();
+            } else {
+              alert("Erro: " + res.erro);
+            }
+          })
+          .processarEmissaoCartao(cartao, session.email);
+      }
+
+      if (input.files.length > 0) {
+        const arquivo = input.files[0];
+        const leitor = new FileReader();
+        statusEl.textContent = "Enviando foto...";
+        statusEl.classList.remove('hidden');
+        btn.textContent = "Enviando foto...";
+        btn.disabled = true;
+        leitor.onload = function(ev) {
+          google.script.run
+            .withSuccessHandler(function(res) {
+              if (res.sucesso) {
+                statusEl.textContent = "✅ Foto salva no Drive";
+                salvarCartaoComFoto(res.url);
+              } else {
+                statusEl.textContent = "⚠️ Falha no upload da foto: " + res.erro;
+                salvarCartaoComFoto(null);
+              }
+            })
+            .salvarImagemNoDrive(ev.target.result, `CARTAO_${cartao.placa01}_${Date.now()}.jpg`);
+        };
+        leitor.readAsDataURL(arquivo);
+      } else {
+        salvarCartaoComFoto(null);
+      }
     }
   </script>
 </body>

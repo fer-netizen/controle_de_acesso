@@ -6,6 +6,26 @@
  */
 
 const PRIVATE_SECURITY_SALT = "CEEAC_SECEL_SECRET_SALT_2026";
+const ID_PASTA_IMAGENS = "1l6a9njLB7g9t7IlpuM_uFk_-xPHO2SUR";
+
+// ============================================================================
+// UPLOAD DE IMAGENS PARA O GOOGLE DRIVE
+// ============================================================================
+function salvarImagemNoDrive(base64Data, nomeArquivo) {
+  try {
+    const pasta = DriveApp.getFolderById(ID_PASTA_IMAGENS);
+    const base64Limpo = base64Data.split(',')[1];
+    const tipoMime = base64Data.split(';')[0].split(':')[1];
+    const blob = Utilities.newBlob(Utilities.base64Decode(base64Limpo), tipoMime, nomeArquivo);
+    const arquivo = pasta.createFile(blob);
+    arquivo.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    registrarLogAuditoria("INFO", "UPLOAD_IMAGEM", "SYSTEM", `Imagem salva: ${nomeArquivo}`);
+    return { sucesso: true, url: arquivo.getUrl(), id: arquivo.getId() };
+  } catch (erro) {
+    registrarLogAuditoria("ERROR", "UPLOAD_FALHA", "SYSTEM", erro.toString());
+    return { sucesso: false, erro: erro.toString() };
+  }
+}
 
 function obterConexaoPlanilha() {
   const SPREADSHEET_ID_LOCAL = "1ibZ43sYryxg7PqV2mCKsdE1e26aX4KLWXBh2QLTxe1o";
